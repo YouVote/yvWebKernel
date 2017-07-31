@@ -1,3 +1,6 @@
+// this module is the interface between host and widget. 
+// job is to sanitize the function calls, and handle a 
+// variation of widget method availability. 
 define(["./widgetrouter","jquery"],function(widgetrouter){
 	return function questionhandler(domParams,kernelParams,interactManager){
 		// domParams assumed to be jQuery objects - 
@@ -5,10 +8,8 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 
 		var qnCore;
 		var currWidName, currParams, currStudResp;
-
-		var $qnOptsDiv=domParams.$optDiv;
-		var $qnRespDiv=domParams.$respDiv;
-
+		// var $qnOptsDiv=domParams.$optDiv;
+		// var $qnRespDiv=domParams.$respDiv;
 		var modBaseAddr=kernelParams.yvProdBaseAddr+"mods/";
 
 		var headManager=new function($head){
@@ -37,8 +38,8 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 				// push.
 				$currWidHead=$newStyle;
 			}
-		}(domParams.$headDom);
-
+		// }(domParams.$headDom);
+		}(domParams("headDom"));
 		function pushQuestion(studentUuid){
 			var studentList=interactManager.getConnectedStudents();
 			studentList[studentUuid].relay({
@@ -56,8 +57,11 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 			widgetReadyCallback=function(){
 				qnCore=qnCore.widgetObj();
 				interactManager.restorePrevAnswered(currStudResp);
-				$qnOptsDiv.html(qnCore.responseInput());
-				$qnRespDiv.html(qnCore.responseDom());
+				// $qnOptsDiv.html(qnCore.responseInput());
+				// $qnRespDiv.html(qnCore.responseDom());
+				// possibly use update dom instead of domParams. but head will be treated differently. 
+				domParams("optDiv").html(qnCore.responseInput());
+				domParams("respDiv").html(qnCore.responseDom());
 				if(typeof(qnCore.widHead)=="function"){
 					headManager.set(qnCore.widHead())
 				}
@@ -97,6 +101,10 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 		}
 		this.getStudResp=function(){
 			return currStudResp;
+		}
+		this.updateRespDim=function(height,width){
+			// check if function exists first. 
+			qnCore.updateRespDim(height,width)
 		}
 	}
 })

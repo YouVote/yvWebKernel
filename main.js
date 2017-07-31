@@ -26,31 +26,8 @@ require.config({ urlArgs: "v=" +  (new Date()).getTime() });
 define(["./sockethost","./studentmodel","./questionhandler"],
 function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 	return function(stemDiv,optDiv,respDiv,headDom){ 
-		// tidy this up
-		var domParams={}
-		if(stemDiv instanceof jQuery){
-			domParams.$stemDiv=stemDiv;
-		}else{
-			domParams.$stemDiv=$(stemDiv);
-		}
-		if(optDiv instanceof jQuery){
-			domParams.$optDiv=optDiv;
-		}else{
-			domParams.$optDiv=$(optDiv);
-		}
-		if(respDiv instanceof jQuery){
-			domParams.$respDiv=respDiv;
-		}else{
-			domParams.$respDiv=$(respDiv);
-		}
-		if(headDom instanceof jQuery){
-			domParams.$headDom=headDom;
-		}else{
-			domParams.$headDom=$(headDom);
-		}
-
 		var socketHostObj, studentModelObj, qnHandlerObj, kernelObj=this;
-		var connectCalled=false, socketReady=false, kivQn={};
+		var connectCalled=false, socketReady=false, kivQn=null;
 
 		// initialized to the following default values, 
 		// values be changed from caller through setKernelParam.
@@ -75,9 +52,11 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 			socketPassCallback:function(lessonId){
 				console.log("CONNECTED! \nLessonID: "+lessonId)
 				socketReady=true;
-				kernelObj.execQn(
-					kivQn["qnStem"],kivQn["widgetName"],kivQn["widgetParams"],kivQn["currResp"]
-				);
+				if(kivQn!=null){ // kivQn==null when connect() is called directly
+					kernelObj.execQn( // kivQn!=null when connect() is called through execQn()
+						kivQn["qnStem"],kivQn["widgetName"],kivQn["widgetParams"],kivQn["currResp"]
+					);
+				}
 				kernelParams.onConnectPass(lessonId);
 				kivQn={};
 			},
@@ -124,18 +103,61 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 				return studentModelObj.getStudents();
 			},
 		};
+		var domManager=new (function(){
+			var domLive={};
+			var domParams={"stemDiv":$('div'),"optDiv":$('div'),"respDiv":$('div'),"headDom":$('head')}
+			for(var domName in domParams){
+				domLive[domName]=false;
+			}
+			this.setDom=function(domName,domObj){
+				var newDomObj;
+				if(domName in domParams){
+					if(domObj instanceof jQuery){
+						newDomObj=domObj;
+					}else{
+						newDomObj=$(domObj);
+					}
+					// TODO: check that typeof domobj is same. 
+					if(domLive[domName]){ // swap DOM content 
+						// sometimes dom is updated in between swaps. debug this. 
+						var oldDomHtml=domParams[domName].html();
+    					newDomObj.html(oldDomHtml);
+					}
+					domParams[domName]=newDomObj;
+				}else{
+					console.warn("WARNING: requested DOM "+domName+" is not a valid domParam.");
+				}
+			}
+			this.getDom=function(domName){
+				if(domName in domLive){
+					domLive[domName]=true;
+				}else{
+					console.warn("WARNING: requested DOM "+domName+" is not a valid domParam.");
+				}
+				return domParams[domName];
+			}
+		})();
+		domManager.setDom("stemDiv",stemDiv);
+		domManager.setDom("optDiv",optDiv);
+		domManager.setDom("respDiv",respDiv);
+		domManager.setDom("headDom",headDom);
 
-
-		function connect(){ // called on first execQn. possibly make a public method. 
-			connectCalled=true;
-			studentModelObj=new studentModelEngine(interactManager);
-			// pass head here, in kernelParams
-			qnHandlerObj=new qnHandlerEngine(domParams,kernelParams,interactManager);
-			require.config({paths:{"socketio-server":kernelParams.socketScriptURL}});
-			socketHostObj=new socketHostEngine(
-				kernelParams,
-				interactManager
-			);
+		// function connect(){ // called on first execQn. possibly make a public method. 
+		this.connect=function(){
+			if(!connectCalled){
+				studentModelObj=new studentModelEngine(interactManager);
+				// pass head here, in kernelParams
+				// qnHandlerObj=new qnHandlerEngine(domParams,kernelParams,interactManager);
+				qnHandlerObj=new qnHandlerEngine(domManager.getDom,kernelParams,interactManager);
+				require.config({paths:{"socketio-server":kernelParams.socketScriptURL}});
+				socketHostObj=new socketHostEngine(
+					kernelParams,
+					interactManager
+				);
+				connectCalled=true;
+			}else{
+				console.warn("WARNING: connect() already called.");
+			}
 		}
 		this.setKernelParam=function(name,value){
 		// can only be used before connect is called, has no effect otherwise
@@ -151,23 +173,29 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 			if(!connectCalled){
 				kernelParams[name]=value;
 			}else{
-				console.warn("cannot change kernel params after socket opened");
+				console.warn("WARNING: cannot change kernel params after socket opened.");
 				console.warn("setKernelParams "+ name +"="+value+" is ignored");	
 			}
+		}
+		this.swapDom=function(domName,domObj){
+			domManager.setDom(domName,domObj);
 		}
 		this.execQn=function(qnStem,widgetName,widgetParams,currResp){
 			if(socketReady){ // good to go if socket ready
 				require(["ctype"],function(ctype){
 					var stemContent=new ctype(qnStem);
 					// $stemDiv[0] gets the dom out of a jquery obj.
-					stemContent.putInto(domParams.$stemDiv[0]);
+					// stemContent.putInto(domParams.$stemDiv[0]);
+					stemContent.putInto(domManager.getDom("stemDiv")[0]);
+					
 				}) 
 				qnHandlerObj.execQn(widgetName,widgetParams,currResp);
 			} else {
 				// possibility that connect() called but socket not ready yet.
 				// if so, just update currQn and wait.
 				kivQn={"qnStem":qnStem,"widgetName":widgetName,"widgetParams":widgetParams,"currResp":currResp}
-				if(!connectCalled){connect();}
+				// if(!connectCalled){connect();}
+				if(!connectCalled){this.connect();}
 			}
 		}
 		this.getQnResp=function(){

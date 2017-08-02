@@ -5,11 +5,8 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 	return function questionhandler(domManager,kernelParams,interactManager){
 		// domParams assumed to be jQuery objects - 
 		// this is managed in questionhandler
-
 		var qnCore;
 		var currWidName, currParams, currStudResp;
-		// var $qnOptsDiv=domParams.$optDiv;
-		// var $qnRespDiv=domParams.$respDiv;
 		var modBaseAddr=kernelParams.yvProdBaseAddr+"mods/";
 
 		var headManager=new function($head){
@@ -38,8 +35,6 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 				// push.
 				$currWidHead=$newStyle;
 			}
-		// }(domParams.$headDom);
-		// }(domParams("headDom"));
 		}(domManager.getHeadDom());
 		function pushQuestion(studentUuid){
 			var studentList=interactManager.getConnectedStudents();
@@ -58,11 +53,6 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 			widgetReadyCallback=function(){
 				qnCore=qnCore.widgetObj();
 				interactManager.restorePrevAnswered(currStudResp);
-				// $qnOptsDiv.html(qnCore.responseInput());
-				// $qnRespDiv.html(qnCore.responseDom());
-				// possibly use update dom instead of domParams. but head will be treated differently. 
-				// domParams("optDiv").html(qnCore.responseInput());
-				// domParams("respDiv").html(qnCore.responseDom());
 				domManager.passWidDom("optDiv",qnCore.responseInput())
 				domManager.passWidDom("respDiv",qnCore.responseDom())
 				if(typeof(qnCore.widHead)=="function"){

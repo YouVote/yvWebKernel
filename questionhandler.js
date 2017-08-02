@@ -2,7 +2,7 @@
 // job is to sanitize the function calls, and handle a 
 // variation of widget method availability. 
 define(["./widgetrouter","jquery"],function(widgetrouter){
-	return function questionhandler(domParams,kernelParams,interactManager){
+	return function questionhandler(domManager,kernelParams,interactManager){
 		// domParams assumed to be jQuery objects - 
 		// this is managed in questionhandler
 
@@ -39,7 +39,8 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 				$currWidHead=$newStyle;
 			}
 		// }(domParams.$headDom);
-		}(domParams("headDom"));
+		// }(domParams("headDom"));
+		}(domManager.getHeadDom());
 		function pushQuestion(studentUuid){
 			var studentList=interactManager.getConnectedStudents();
 			studentList[studentUuid].relay({
@@ -60,8 +61,10 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 				// $qnOptsDiv.html(qnCore.responseInput());
 				// $qnRespDiv.html(qnCore.responseDom());
 				// possibly use update dom instead of domParams. but head will be treated differently. 
-				domParams("optDiv").html(qnCore.responseInput());
-				domParams("respDiv").html(qnCore.responseDom());
+				// domParams("optDiv").html(qnCore.responseInput());
+				// domParams("respDiv").html(qnCore.responseDom());
+				domManager.passWidDom("optDiv",qnCore.responseInput())
+				domManager.passWidDom("respDiv",qnCore.responseDom())
 				if(typeof(qnCore.widHead)=="function"){
 					headManager.set(qnCore.widHead())
 				}

@@ -104,43 +104,78 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 			},
 		};
 		var domManager=new (function(){
-			var domLive={};
-			var domParams={"stemDiv":$('div'),"optDiv":$('div'),"respDiv":$('div'),"headDom":$('head')}
-			for(var domName in domParams){
-				domLive[domName]=false;
-			}
-			this.setDom=function(domName,domObj){
+			// var domLive={};
+			// var domParams={"stemDiv":$('div'),"optDiv":$('div'),"respDiv":$('div'),"headDom":$('head')}
+			// var webDom, widDom;
+			// passWebDom, passWidDom;
+			// getHeadDom()
+			// will change again when we have widlet and gadgets. 
+			var webDom={"stemDiv":$('div'),"optDiv":$('div'),"respDiv":$('div'),"headDom":$('head')}
+			var widDom={};
+			// for(var domName in domParams){
+			// 	domLive[domName]=false;
+			// }
+			// this.setDom=function(domName,domObj){
+			// 	var newDomObj;
+			// 	if(domName in domParams){
+			// 		if(domObj instanceof jQuery){
+			// 			newDomObj=domObj;
+			// 		}else{
+			// 			newDomObj=$(domObj);
+			// 		}
+			// 		// TODO: check that typeof domobj is same. 
+			// 		if(domLive[domName]){ // swap DOM content 
+			// 			// sometimes dom is updated in between swaps. debug this. 
+			// 			var oldDomHtml=domParams[domName].html();
+   			//			newDomObj.html(oldDomHtml);
+			// 		}
+			// 		domParams[domName]=newDomObj;
+			// 	}else{
+			// 		console.warn("WARNING: requested DOM "+domName+" is not a valid domParam.");
+			// 	}
+			// }
+			// this.getDom=function(domName){
+			// 	if(domName in domLive){
+			// 		domLive[domName]=true;
+			// 	}else{
+			// 		console.warn("WARNING: requested DOM "+domName+" is not a valid domParam.");
+			// 	}
+			// 	return domParams[domName];
+			// }
+			this.passWebDom=function(domName,domObj){
+				console.log("webDom "+domName)
 				var newDomObj;
-				if(domName in domParams){
+				if(domName in webDom){
 					if(domObj instanceof jQuery){
 						newDomObj=domObj;
 					}else{
 						newDomObj=$(domObj);
 					}
-					// TODO: check that typeof domobj is same. 
-					if(domLive[domName]){ // swap DOM content 
-						// sometimes dom is updated in between swaps. debug this. 
-						var oldDomHtml=domParams[domName].html();
-    					newDomObj.html(oldDomHtml);
+					webDom[domName]=newDomObj;
+					if(domName in widDom){ // swap DOM content 
+						webDom[domName].html(widDom[domName]);
 					}
-					domParams[domName]=newDomObj;
 				}else{
-					console.warn("WARNING: requested DOM "+domName+" is not a valid domParam.");
+					console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
 				}
 			}
-			this.getDom=function(domName){
-				if(domName in domLive){
-					domLive[domName]=true;
+			this.passWidDom=function(domName,domObj){
+				console.log("widDom "+domName)
+				if(domName in webDom){
+					widDom[domName]=domObj;
+					webDom[domName].html(widDom[domName]);
 				}else{
-					console.warn("WARNING: requested DOM "+domName+" is not a valid domParam.");
+					console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
 				}
-				return domParams[domName];
+			}
+			this.getHeadDom=function(){
+				return webDom["headDom"];
 			}
 		})();
-		domManager.setDom("stemDiv",stemDiv);
-		domManager.setDom("optDiv",optDiv);
-		domManager.setDom("respDiv",respDiv);
-		domManager.setDom("headDom",headDom);
+		domManager.passWebDom("stemDiv",stemDiv);
+		domManager.passWebDom("optDiv",optDiv);
+		domManager.passWebDom("respDiv",respDiv);
+		domManager.passWebDom("headDom",headDom);
 
 		// function connect(){ // called on first execQn. possibly make a public method. 
 		this.connect=function(){
@@ -148,7 +183,7 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 				studentModelObj=new studentModelEngine(interactManager);
 				// pass head here, in kernelParams
 				// qnHandlerObj=new qnHandlerEngine(domParams,kernelParams,interactManager);
-				qnHandlerObj=new qnHandlerEngine(domManager.getDom,kernelParams,interactManager);
+				qnHandlerObj=new qnHandlerEngine(domManager,kernelParams,interactManager);
 				require.config({paths:{"socketio-server":kernelParams.socketScriptURL}});
 				socketHostObj=new socketHostEngine(
 					kernelParams,
@@ -178,7 +213,7 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 			}
 		}
 		this.swapDom=function(domName,domObj){
-			domManager.setDom(domName,domObj);
+			domManager.passWebDom(domName,domObj);
 		}
 		this.execQn=function(qnStem,widgetName,widgetParams,currResp){
 			if(socketReady){ // good to go if socket ready
@@ -186,8 +221,11 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 					var stemContent=new ctype(qnStem);
 					// $stemDiv[0] gets the dom out of a jquery obj.
 					// stemContent.putInto(domParams.$stemDiv[0]);
-					stemContent.putInto(domManager.getDom("stemDiv")[0]);
-					
+					// stemContent.putInto(domManager.getDom("stemDiv")[0]);
+					// TODO: take a long hard look at ctype
+					var stemDiv=document.createElement("div");
+					stemContent.putInto(stemDiv);
+					domManager.passWidDom("stemDiv",stemDiv);
 				}) 
 				qnHandlerObj.execQn(widgetName,widgetParams,currResp);
 			} else {

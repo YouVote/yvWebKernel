@@ -138,12 +138,37 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 		domManager.passWebDom("stemDiv",stemDiv);
 		domManager.passWebDom("optDiv",optDiv);
 		domManager.passWebDom("respDiv",respDiv);
-		domManager.passWebDom("headDom",headDom);
+
+		var headManager=new (function(head){
+			var $head;
+			if(head instanceof jQuery){
+				$head=head;
+			}else{
+				$head=$(head);
+			}
+			var $currWidHead=[]; 
+			this.clear=function(){ 
+				while ($currWidHead.length>0){
+					$currWidHead[$currWidHead.length-1].remove()
+					$currWidHead.pop();
+				}
+			}
+			this.set=function(newStyle){ 
+				if(newStyle instanceof jQuery){
+					$newStyle=newStyle;
+				}else{
+					$newStyle=$(newStyle);
+				}
+				$newStyle.appendTo($head);
+				$currWidHead.push($newStyle)
+			}
+		})(headDom);
 
 		this.connect=function(){
 			if(!connectCalled){
+				headManager.clear();
 				studentModelObj=new studentModelEngine(interactManager);
-				qnHandlerObj=new qnHandlerEngine(domManager,kernelParams,interactManager);
+				qnHandlerObj=new qnHandlerEngine(domManager,headManager,kernelParams,interactManager);
 				require.config({paths:{"socketio-server":kernelParams.socketScriptURL}});
 				socketHostObj=new socketHostEngine(
 					kernelParams,

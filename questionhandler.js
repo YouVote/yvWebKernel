@@ -2,40 +2,13 @@
 // job is to sanitize the function calls, and handle a 
 // variation of widget method availability. 
 define(["./widgetrouter","jquery"],function(widgetrouter){
-	return function questionhandler(domManager,kernelParams,interactManager){
+	return function questionhandler(domManager,headManager,kernelParams,interactManager){
 		// domParams assumed to be jQuery objects - 
 		// this is managed in questionhandler
 		var qnCore;
 		var currWidName, currParams, currStudResp;
 		var modBaseAddr=kernelParams.yvProdBaseAddr+"mods/";
 
-		var headManager=new function($head){
-			// var $currPermStyle
-			// currwidstyle should be an array of jquery styles. 
-			var $currWidHead=null;
-			this.setPerm=function(newStyle){
-				$head.append(newStyle)
-			}
-			this.clear=function(){ // simply clear
-				// check if exists [loop over and remove]
-				if($currWidHead!=null){
-					$currWidHead.remove();
-				}
-			}
-			this.set=function(newStyle){ // setItem
-				// generalize this to check if array
-				// check if newStyle is array.
-				if(typeof(newStyle)=="string"){
-					$newStyle=$(newStyle);
-				} else {
-				// check if it is jquery obj.
-					$newStyle=newStyle;
-				}
-				$newStyle.appendTo($head);
-				// push.
-				$currWidHead=$newStyle;
-			}
-		}(domManager.getHeadDom());
 		function pushQuestion(studentUuid){
 			var studentList=interactManager.getConnectedStudents();
 			studentList[studentUuid].relay({
@@ -47,9 +20,11 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 		}
 		this.execQn=function(widName,params,studResp){
 			currWidName=widName;currParams=params;currStudResp=studResp;
-			headManager.clear();
 			modulePath=kernelParams.yvProdBaseAddr+"mods/"+currWidName+".js";
-
+			// inject yvProdBaseAddr into params.
+			// var system={}; 
+			// system.yvProdBaseAddr = kernelParams.yvProdBaseAddr
+			// params["system"]=system;
 			widgetReadyCallback=function(){
 				qnCore=qnCore.widgetObj();
 				interactManager.restorePrevAnswered(currStudResp);

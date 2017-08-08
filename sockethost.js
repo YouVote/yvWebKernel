@@ -32,6 +32,9 @@ define([],function(){
 						interactManager.studentResp(pkt.socketId, pkt.msg)
 						break;
 					//todo: add transient state signal (transig) here.
+					case "transSig":
+						interactManager.sigAw(pkt.socketId, packet.msg);
+						break;
 				}
 			});
 

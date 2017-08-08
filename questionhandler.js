@@ -5,26 +5,37 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 	return function questionhandler(domManager,headManager,kernelParams,interactManager){
 		// domParams assumed to be jQuery objects - 
 		// this is managed in questionhandler
-		var qnCore;
+		var qnCore; var question=this;
 		var currWidName, currParams, currStudResp;
 		var modBaseAddr=kernelParams.yvProdBaseAddr+"mods/";
 
-		function pushQuestion(studentUuid){
+		function pushQuestion(){
 			var studentList=interactManager.getConnectedStudents();
-			studentList[studentUuid].relay({
-				"title":"execModule",
-				"modName":currWidName,
-				"modParams":currParams,
-				"currAns":currStudResp[studentUuid]
-			})
+			for (var studentUuid in studentList){
+				studentList[studentUuid].relay({
+					"title":"execModule",
+					"modName":currWidName,
+					"modParams":currParams,
+					"currAns":currStudResp[studentUuid]
+				})
+			}
+		}
+		function sigWa(sig){
+			var studentList=interactManager.getConnectedStudents();
+			for (var studentUuid in studentList){
+				studentList[studentUuid].relay({
+					"title":"tranSig",
+					"data":sig
+				})
+			}
 		}
 		this.execQn=function(widName,params,studResp){
 			currWidName=widName;currParams=params;currStudResp=studResp;
 			modulePath=kernelParams.yvProdBaseAddr+"mods/"+currWidName+".js";
 			// inject yvProdBaseAddr into params.
-			// var system={}; 
-			// system.yvProdBaseAddr = kernelParams.yvProdBaseAddr
-			// params["system"]=system;
+			var system={}; system.yvProdBaseAddr=kernelParams.yvProdBaseAddr;
+			// tidy this up when overhauling core/side params structure
+			if(params==null){params={}}; params["system"]=system;
 			widgetReadyCallback=function(){
 				qnCore=qnCore.widgetObj();
 				interactManager.restorePrevAnswered(currStudResp);
@@ -33,25 +44,22 @@ define(["./widgetrouter","jquery"],function(widgetrouter){
 				if(typeof(qnCore.widHead)=="function"){
 					headManager.set(qnCore.widHead())
 				}
+				pushQuestion(studentUuid);
 				var studentList=interactManager.getConnectedStudents();
-				for (var studentUuid in studentList){
-					pushQuestion(studentUuid)
-				}
 				for (var studentUuid in currStudResp){
 					qnCore.processResponse(studentUuid,currStudResp[studentUuid]);
 				}
 				// pass sigaw and sigwa
-				// if(typeof(currWidObj.sigAw)=="function"){
-				// 	currWidObj.sigAw(kernelParams.sigAw);
-				// }
-				// if(typeof(currWidObj.sigWa)=="function"){
-				// 	question.sigWa=currWidObj.sigWa;
-				// }else{
-				// 	question.sigWa=function(data){
-				// 		console.warn("signal handler does not exist for " + widName);
-				// 	}
-				// }
-				// widObj=currWidObj;	
+				if(typeof(qnCore.passSigWa)=="function"){
+					qnCore.passSigWa(sigWa);
+				}
+				if(typeof(qnCore.sigAw)=="function"){
+					question.sigAw=qnCore.sigAw;
+				}else{
+					question.sigAw=function(data){
+						console.warn("signal handler does not exist for " + widName);
+					}
+				}	
 			}
 			qnCore=new widgetrouter(modulePath,currParams,widgetReadyCallback);
 		}

@@ -76,6 +76,9 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 				var studentUuid=studentModelObj.socIdToUuid(socketId);
 				qnHandlerObj.procAns(studentUuid,data.data);
 			},
+			sigAw:function(data){
+				qnHandlerObj.sigWa(data);
+			},
 
 			// called in studentModel
 			addStudent:function(studentUuid){
@@ -101,7 +104,7 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 			},
 			getConnectedStudents:function(){
 				return studentModelObj.getStudents();
-			},
+			}
 		};
 		var domManager=new (function(){
 			// will change again when we have widlet and gadgets. 

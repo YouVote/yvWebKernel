@@ -76,8 +76,9 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 				var studentUuid=studentModelObj.socIdToUuid(socketId);
 				qnHandlerObj.procAns(studentUuid,data.data);
 			},
-			sigAw:function(data){
-				qnHandlerObj.sigWa(data);
+			sigAw:function(socketId,data){
+				var studentUuid=studentModelObj.socIdToUuid(socketId);
+				qnHandlerObj.sigAw(studentUuid,data.data);
 			},
 
 			// called in studentModel

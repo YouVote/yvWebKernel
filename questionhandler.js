@@ -1,86 +1,104 @@
+// * list down the entirety of what this is responsible for, 
+// and identify if there are any patterns *s 
 // this module is the interface between host and widget. 
 // job is to sanitize the function calls, and handle a 
 // variation of widget method availability. 
-define(["./widgetrouter","jquery"],function(widgetrouter){
+// the other job is to manage the nitty gritty of question
+// administration - responding to new students enter,
+// and appropriately broadcasting signals. 
+define(["jquery"],function(){
 	return function questionhandler(domManager,headManager,kernelParams,interactManager){
-		// domParams assumed to be jQuery objects - 
-		// this is managed in questionhandler
-		var qnCore; var question=this;
-		var currWidName, currParams, currStudResp;
+		var question=this;
+		var currWidName, currWidParams, currStudResp;
 		var modBaseAddr=kernelParams.yvProdBaseAddr+"mods/";
 
-		function pushQuestion(){
+		function pushQuestion(studentUuid){
+			var studentList=interactManager.getConnectedStudents();
+			studentList[studentUuid].relay({
+				"title":"execModule",
+				"modName":currWidName,
+				"modParams":currWidParams,
+				"currAns":currStudResp[studentUuid]
+			})
+		}
+		function sigWa(sig){ 
+		// potential for targeted sigWa, for now keep it universal. 
 			var studentList=interactManager.getConnectedStudents();
 			for (var studentUuid in studentList){
-				studentList[studentUuid].relay({
-					"title":"execModule",
-					"modName":currWidName,
-					"modParams":currParams,
-					"currAns":currStudResp[studentUuid]
-				})
+				studentList[studentUuid].relay({"title":"tranSig","data":sig})
 			}
 		}
-		function sigWa(sig){
-			var studentList=interactManager.getConnectedStudents();
-			for (var studentUuid in studentList){
-				studentList[studentUuid].relay({
-					"title":"tranSig",
-					"data":sig
-				})
-			}
+		// called as studentEnter by socketHost
+		this.initConnectedStudent=function(studentUuid){
+			pushQuestion(studentUuid);
 		}
-		this.execQn=function(widName,params,studResp){
-			currWidName=widName;currParams=params;currStudResp=studResp;
-			modulePath=kernelParams.yvProdBaseAddr+"mods/"+currWidName+".js";
+		// passed through main, called by lessonModel when changing qn. 
+		this.getStudResp=function(){
+			return currStudResp;
+		}
+
+		this.execQn=function(widName,widParams,studResp){
+			var widObj; currWidName=widName;
+			currWidParams=widParams;currStudResp=studResp;
+			widPath=kernelParams.yvProdBaseAddr+"mods/"+currWidName+".js";
 			// inject yvProdBaseAddr into params.
-			var system={}; system.yvProdBaseAddr=kernelParams.yvProdBaseAddr;
-			// tidy this up when overhauling core/side params structure
-			if(params==null){params={}}; params["system"]=system;
-			widgetReadyCallback=function(){
-				qnCore=qnCore.widgetObj();
+			var system={}; if(widParams==null){widParams={}}; 
+			system.yvProdBaseAddr=kernelParams.yvProdBaseAddr; 
+			widParams["system"]=system;
+			require([widPath],function(widget){
+				widObj=new widget.webEngine(widParams);
 				interactManager.restorePrevAnswered(currStudResp);
-				domManager.passWidDom("optDiv",qnCore.responseInput())
-				domManager.passWidDom("respDiv",qnCore.responseDom())
-				if(typeof(qnCore.widHead)=="function"){
-					headManager.set(qnCore.widHead())
+				// this will change with widget and gadgets. 
+				// kiv pattern for now. 
+				domManager.passWidDom("optDiv",widObj.responseInput());
+				domManager.passWidDom("respDiv",widObj.responseDom());
+				// this is the list of interfaces with the widget. 
+				if(typeof(widObj.widHead)=="function"){
+					headManager.set(widObj.widHead())
 				}
-				pushQuestion(studentUuid);
 				var studentList=interactManager.getConnectedStudents();
+				for (var studentUuid in studentList){
+					pushQuestion(studentUuid)
+				}
 				for (var studentUuid in currStudResp){
-					qnCore.processResponse(studentUuid,currStudResp[studentUuid]);
+					widObj.processResponse(studentUuid,currStudResp[studentUuid]);
 				}
-				// pass sigaw and sigwa
-				if(typeof(qnCore.passSigWa)=="function"){
-					qnCore.passSigWa(sigWa);
+				if(typeof(widObj.passSigWa)=="function"){
+					widObj.passSigWa(sigWa);
 				}
-				if(typeof(qnCore.sigAw)=="function"){
-					question.sigAw=qnCore.sigAw;
+				if(typeof(widObj.sigAw)=="function"){
+					question.sigAw=widObj.sigAw;
 				}else{
 					question.sigAw=function(data){
 						console.warn("signal handler does not exist for " + widName);
 					}
 				}	
-			}
-			qnCore=new widgetrouter(modulePath,currParams,widgetReadyCallback);
-		}
-		this.procAns=function(studentUuid,studentAns){
-			if(!(studentUuid in currStudResp)){ // check that student has not answered
-				currStudResp[studentUuid]=studentAns; 
-				qnCore.processResponse(studentUuid,studentAns);
-				interactManager.markAnswered(studentUuid);
-			} else {
-				console.log(studentUuid+" has already answered");
-			}
-		}
-		this.initConnectedStudent=function(studentUuid){
-			pushQuestion(studentUuid);
-		}
-		this.getStudResp=function(){
-			return currStudResp;
-		}
-		this.updateRespDim=function(height,width){
-			// check if function exists first. 
-			qnCore.updateRespDim(height,width)
+				if(typeof(widObj.updateRespDim)=="function"){
+					question.updateRespDim=widObj.updateRespDim;
+				}else{
+					question.updateRespDim=function(){
+						console.warn(widName+" does not have updateRespDim function");
+					}
+				}
+				if(typeof(widObj.processResponse)=="function"){
+					question.procAns=function(studentUuid,studentAns){
+						if(!(studentUuid in currStudResp)){ // check that student has not answered
+							currStudResp[studentUuid]=studentAns; 
+							// check that function exists first 
+							widObj.processResponse(studentUuid,studentAns);
+							interactManager.markAnswered(studentUuid);
+						} else {
+							console.log(studentUuid+" has already answered");
+						}
+					}
+				} else {
+					question.procAns=function(){
+						console.warn(widName+" does not have processResponse function");
+					}
+				}
+			},function(err){
+				console.error(err+" when loading widget "+widName)
+			});
 		}
 	}
 })

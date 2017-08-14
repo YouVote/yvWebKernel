@@ -6,20 +6,17 @@
 // 1. managing socket connection
 // 2. keeping track of student in session
 // 3. executing questions
-//
-// NOT Responsible for:
-// * View implementation. That is passed as a function into
-// kernelParams, which are triggered by the appropriate events.
+// 4. interfacing and managing web DOM 
 //
 // Also
 // - interfaces with external for view and lesson management
 // - holds default params but allows changes
+// - sets yvBaseProdUrl
 // 
 // Potential future upgrades:
-// 1. include optional question settings
-// 2. transient state signal (transig)
-// 3. select user/answer
-// 4. mark answer
+// 1. side params, create params system 
+// 2. select user/answer
+// 3. mark answer
 
 require.config({ urlArgs: "v=" +  (new Date()).getTime() });
 
@@ -107,6 +104,11 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 				return studentModelObj.getStudents();
 			}
 		};
+		
+		// Tidy this up when gadget and widlets implemented.  
+		// takes the dom passed by web, and manages what the widget
+		// is allowed to do to it. passed as a function into questionhanler.
+		// the function will change with widlets and gadgets.
 		var domManager=new (function(){
 			// will change again when we have widlet and gadgets. 
 			var webDom={"stemDiv":$('div'),"optDiv":$('div'),"respDiv":$('div'),"headDom":$('head')}
@@ -206,6 +208,7 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 		}
 		this.execQn=function(qnStem,widgetName,widgetParams,currResp){
 			if(socketReady){ // good to go if socket ready
+				// put qnStem
 				require(["ctype"],function(ctype){
 					var stemContent=new ctype(qnStem);
 					// TODO: take a long hard look at ctype

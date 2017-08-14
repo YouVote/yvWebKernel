@@ -23,7 +23,7 @@ define([],function(){
 				interactManager.studentLeave(socketId);
 			});
 			socketCore.on('relay',function(pkt){
-				// relay so far conveys two kinds of messages from app
+				// relay so far conveys three kinds of messages from app
 				switch(pkt.msg.title){
 					case 'studentParams=':
 						interactManager.studentEnter(pkt.socketId, pkt.msg)
@@ -31,7 +31,6 @@ define([],function(){
 					case 'ans':
 						interactManager.studentResp(pkt.socketId, pkt.msg)
 						break;
-					//todo: add transient state signal (transig) here.
 					case "tranSig":
 						interactManager.sigAw(pkt.socketId, pkt.msg);
 						break;

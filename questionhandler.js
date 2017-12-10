@@ -48,21 +48,39 @@ define(["jquery"],function(){
 			require([widPath],function(widget){
 				widObj=new widget.webEngine(widParams);
 				interactManager.restorePrevAnswered(currStudResp);
-				// this will change with widget and gadgets. 
-				// kiv pattern for now. 
-				domManager.passWidDom("optDiv",widObj.responseInput());
-				domManager.passWidDom("respDiv",widObj.responseDom());
 				// this is the list of interfaces with the widget. 
 				if(typeof(widObj.widHead)=="function"){
 					headManager.set(widObj.widHead())
 				}
+				// this will change with widget and gadgets. 
+				// kiv pattern for now. 
+				domManager.passWidDom("optDiv",widObj.responseInput());
+				domManager.passWidDom("respDiv",widObj.responseDom());
 				var studentList=interactManager.getConnectedStudents();
 				for (var studentUuid in studentList){
 					pushQuestion(studentUuid)
 				}
-				for (var studentUuid in currStudResp){
-					widObj.processResponse(studentUuid,currStudResp[studentUuid]);
+
+				if(typeof(widObj.processResponse)=="function"){
+					for (var studentUuid in currStudResp){
+						widObj.processResponse(studentUuid,currStudResp[studentUuid]);
+					}
+					question.procAns=function(studentUuid,studentAns){
+						// checks that student has not answered
+						if(!(studentUuid in currStudResp)){ 
+							currStudResp[studentUuid]=studentAns; 
+							widObj.processResponse(studentUuid,studentAns);
+							interactManager.markAnswered(studentUuid);
+						} else {
+							console.warn(studentUuid+" has already answered");
+						}
+					}
+				} else {
+					question.procAns=function(){
+						console.warn(widName+" does not have processResponse function");
+					}
 				}
+
 				if(typeof(widObj.passSigWa)=="function"){
 					widObj.passSigWa(sigWa);
 				}
@@ -78,22 +96,6 @@ define(["jquery"],function(){
 				}else{
 					question.updateRespDim=function(){
 						console.warn(widName+" does not have updateRespDim function");
-					}
-				}
-				if(typeof(widObj.processResponse)=="function"){
-					question.procAns=function(studentUuid,studentAns){
-						if(!(studentUuid in currStudResp)){ // check that student has not answered
-							currStudResp[studentUuid]=studentAns; 
-							// check that function exists first 
-							widObj.processResponse(studentUuid,studentAns);
-							interactManager.markAnswered(studentUuid);
-						} else {
-							console.log(studentUuid+" has already answered");
-						}
-					}
-				} else {
-					question.procAns=function(){
-						console.warn(widName+" does not have processResponse function");
 					}
 				}
 			},function(err){

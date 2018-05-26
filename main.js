@@ -30,10 +30,11 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 		// values be changed from caller through setKernelParam.
 		var kernelParams={ 
 			// used for socketHost
-			// socketScriptURL:"https://avalon-gabrielwu84.rhcloud.com/socket.io/socket.io",
-			socketScriptURL:"https://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/socket.io/socket.io",
-			// socketServerURL:"https://avalon-gabrielwu84.rhcloud.com:8443",
-			socketServerURL:"https://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/",
+			// testing http on gh-pages
+			// socketScriptURL:"https://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/socket.io/socket.io",
+			// socketServerURL:"https://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/",
+			socketScriptURL:"http://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/socket.io/socket.io",
+			socketServerURL:"http://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/",
 			// used in qnHandler, 
 			yvWebKernelBaseAddr:"https://youvote.github.io/clicker-web/yvWebKernel/",
 			yvProdBaseAddr:"https://youvote.github.io/clicker-prod/",

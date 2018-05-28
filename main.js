@@ -20,8 +20,8 @@
 
 require.config({ urlArgs: "v=" +  (new Date()).getTime() });
 
-define(["./sockethost","./studentmodel","./questionhandler"],
-function(socketHostEngine,studentModelEngine,qnHandlerEngine){
+define(["socket-router","./sockethost","./studentmodel","./questionhandler"],
+function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 	return function(stemDiv,optDiv,respDiv,headDom){ 
 		var socketHostObj, studentModelObj, qnHandlerObj, kernelObj=this;
 		var connectCalled=false, socketReady=false, kivQn=null;
@@ -33,8 +33,10 @@ function(socketHostEngine,studentModelEngine,qnHandlerEngine){
 			// testing http on gh-pages
 			// socketScriptURL:"https://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/socket.io/socket.io",
 			// socketServerURL:"https://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/",
-			socketScriptURL:"http://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/socket.io/socket.io",
-			socketServerURL:"http://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/",
+			// socketScriptURL:"http://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/socket.io/socket.io",
+			// socketServerURL:"http://socketio-server-youvote.a3c1.starter-us-west-1.openshiftapps.com/",
+			socketScriptURL:router.socketScriptURL,
+			socketServerURL:router.socketServerURL,
 			// used in qnHandler, 
 			yvWebKernelBaseAddr:"https://youvote.github.io/clicker-web/yvWebKernel/",
 			yvProdBaseAddr:"https://youvote.github.io/clicker-prod/",

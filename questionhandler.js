@@ -41,9 +41,11 @@ define(["jquery"],function(){
 			var widObj; currWidName=widName;
 			currWidParams=widParams;currStudResp=studResp;
 			widPath=kernelParams.yvProdBaseAddr+"mods/"+currWidName+".js";
-			// inject yvProdBaseAddr into params.
-			var system={}; if(widParams==null){widParams={}}; 
-			system.yvProdBaseAddr=kernelParams.yvProdBaseAddr; 
+			// inject yvProdBaseAddr into params in the "system" key.
+			// widParams is possibly an object with "core" and side" keys in it. 
+			// also, typeof(array) return object hence the or condition. 
+			if(typeof(widParams)!="object"||Array.isArray(widParams)){widParams={core:widParams}}; 
+			var system={yvProdBaseAddr:kernelParams.yvProdBaseAddr}; 
 			widParams["system"]=system;
 			require([widPath],function(widget){
 				widObj=new widget.webEngine(widParams);

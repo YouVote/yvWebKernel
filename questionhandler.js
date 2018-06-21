@@ -1,5 +1,5 @@
 // * list down the entirety of what this is responsible for, 
-// and identify if there are any patterns *s 
+// and identify if there are any patterns *
 // this module is the interface between host and widget. 
 // job is to sanitize the function calls, and handle a 
 // variation of widget method availability. 
@@ -20,12 +20,23 @@ define(["jquery"],function(){
 				"modParams":currWidParams,
 				"currAns":currStudResp[studentUuid]
 			})
-		}
-		function sigWa(sig){ 
-		// potential for targeted sigWa, for now keep it universal. 
+		} 
+		// broadcast sigWa
+		function sigWaBc(sig){
 			var studentList=interactManager.getConnectedStudents();
 			for (var studentUuid in studentList){
 				studentList[studentUuid].relay({"title":"tranSig","data":sig})
+			}
+		}
+		// targeted sigWa
+		function sigWaTg(targetUuid,sig){
+			var studentList=interactManager.getConnectedStudents();
+			if(targetUuid in studentList){
+				studentList[targetUuid].relay({"title":"tranSig","data":sig}) 
+			}else{
+				// consider if it may be in another list - connected before, 
+				// but just disconnected for a while 
+				console.warn("Uuid "+targetUuid+" not found in studentList");
 			}
 		}
 		// called as studentEnter by socketHost
@@ -48,7 +59,12 @@ define(["jquery"],function(){
 			var system={yvProdBaseAddr:kernelParams.yvProdBaseAddr}; 
 			widParams["system"]=system;
 			require([widPath],function(widget){
-				widObj=new widget.webEngine(widParams);
+				if(typeof(widget)=="object" && typeof(widget.webEngine)=="function"){
+					widObj=new widget.webEngine(widParams);
+				}else{
+					widObj={};
+					console.warn(widName+" not properly defined");
+				}
 				interactManager.restorePrevAnswered(currStudResp);
 				// this is the list of interfaces with the widget. 
 				if(typeof(widObj.widHead)=="function"){
@@ -56,8 +72,17 @@ define(["jquery"],function(){
 				}
 				// this will change with widget and gadgets. 
 				// kiv pattern for now. 
-				domManager.passWidDom("optDiv",widObj.responseInput());
-				domManager.passWidDom("respDiv",widObj.responseDom());
+				if(typeof(widObj.responseInput)=="function"){
+					domManager.passWidDom("optDiv",widObj.responseInput());
+				}else{
+					console.warn(widName+".responseInput() not specified");
+				}
+				if(typeof(widObj.responseDom)=="function"){
+					domManager.passWidDom("respDiv",widObj.responseDom());
+				}else{
+					console.warn(widName+".responseDom() not specified");
+				}
+
 				var studentList=interactManager.getConnectedStudents();
 				for (var studentUuid in studentList){
 					pushQuestion(studentUuid)
@@ -79,25 +104,28 @@ define(["jquery"],function(){
 					}
 				} else {
 					question.procAns=function(){
-						console.warn(widName+" does not have processResponse function");
+						console.warn(widName+".processResponse() method does not exist");
 					}
 				}
 
-				if(typeof(widObj.passSigWa)=="function"){
-					widObj.passSigWa(sigWa);
+				if(typeof(widObj.passSigWaBroadcast)=="function"){
+					widObj.passSigWaBroadcast(sigWaBc);
+				}
+				if(typeof(widObj.passSigWaTarget)=="function"){
+					widObj.passSigWaTarget(sigWaTg);
 				}
 				if(typeof(widObj.sigAw)=="function"){
 					question.sigAw=widObj.sigAw;
 				}else{
 					question.sigAw=function(data){
-						console.warn("signal handler does not exist for " + widName);
+						console.warn(widName+" signal handler does not exist for " );
 					}
 				}	
 				if(typeof(widObj.updateRespDim)=="function"){
 					question.updateRespDim=widObj.updateRespDim;
 				}else{
 					question.updateRespDim=function(){
-						console.warn(widName+" does not have updateRespDim function");
+						console.warn(widName+".updateRespDim() method does not exist");
 					}
 				}
 			},function(err){

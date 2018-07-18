@@ -72,15 +72,20 @@ define(["jquery"],function(){
 				}
 				// this will change with widget and gadgets. 
 				// kiv pattern for now. 
-				if(typeof(widObj.responseInput)=="function"){
-					domManager.passWidDom("optDiv",widObj.responseInput());
+				if(typeof(widObj.passInputDom)=="function"){
+					// domManager.passWidDom("optDiv",widObj.responseInput());
+					domManager.passWidDomFn("optDiv",widObj.passInputDom);
 				}else{
-					console.warn(widName+".responseInput() not specified");
+					domManager.passWidDomFn("optDiv",null);
+					console.warn(widName+".passInputDom() not specified");
 				}
-				if(typeof(widObj.responseDom)=="function"){
-					domManager.passWidDom("respDiv",widObj.responseDom());
+				if(typeof(widObj.passRespDom)=="function"){
+					// should insert respDom height and width info here - but how? 
+					// domManager.passWidDom("respDiv",widObj.responseDom());
+					domManager.passWidDomFn("respDiv",widObj.passRespDom);
 				}else{
-					console.warn(widName+".responseDom() not specified");
+					domManager.passWidDomFn("respDiv",null);
+					console.warn(widName+".passRespDom() not specified");
 				}
 
 				var studentList=interactManager.getConnectedStudents();

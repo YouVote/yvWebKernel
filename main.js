@@ -109,41 +109,90 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 			}
 		};
 		
-		// Tidy this up when gadget and widlets implemented.  
-		// takes the dom passed by web, and manages what the widget
-		// is allowed to do to it. passed as a function into questionhanler.
-		// the function will change with widlets and gadgets.
+		// // Tidy this up when gadget and widlets implemented.  
+		// // takes the dom passed by web, and manages what the widget
+		// // is allowed to do to it. passed as a function into questionhanler.
+		// // the function will change with widlets and gadgets.
+		// var domManager=new (function(){
+		// 	// will change again when we have widlet and gadgets. 
+		// 	// headDom may be unnecessary here. 
+		// 	var $webDom={"stemDiv":$('div'),"optDiv":$('div'),"respDiv":$('div'),"headDom":$('head')}
+		// 	var $widDom={}; // should hold functions
+		// 	this.passWebDom=function(domName,domObj){
+		// 		var $newDomObj;
+		// 		if(domName in $webDom){
+		// 			if(domObj instanceof jQuery){
+		// 				$newDomObj=domObj;
+		// 			}else{
+		// 				$newDomObj=$(domObj);
+		// 			}
+		// 			$webDom[domName]=$newDomObj;
+		// 			if(domName in $widDom){ // swap DOM content 
+		// 				$webDom[domName].html($widDom[domName]);
+		// 			}
+		// 		}else{
+		// 			console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
+		// 		}
+		// 	}
+		// 	this.passWidDom=function(domName,domObj){
+		// 		var $newDomObj;
+		// 		if(domName in $webDom){
+		// 			if(domObj instanceof jQuery){
+		// 				$newDomObj=domObj;
+		// 			}else{
+		// 				$newDomObj=$(domObj);
+		// 			}
+		// 			$widDom[domName]=$newDomObj;
+		// 			$webDom[domName].html($widDom[domName]);
+		// 		}else{
+		// 			console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
+		// 		}
+		// 	}
+		// 	this.getHeadDom=function(){
+		// 		return webDom["headDom"];
+		// 	}
+		// 	// detect windows size change, and change respDiv child size.  
+		// 	$(window).resize(function(){
+		// 		// this is quite a hack - figure out a neater way to handle resize when revamping this. 
+		// 		qnHandlerObj.updateRespDim($webDom["respDiv"].height(),$webDom["respDiv"].width());
+		// 	})
+		// })();
+
 		var domManager=new (function(){
-			// will change again when we have widlet and gadgets. 
-			var webDom={"stemDiv":$('div'),"optDiv":$('div'),"respDiv":$('div'),"headDom":$('head')}
-			var widDom={};
+			var webDom={"stemDiv":null,"optDiv":null,"respDiv":null};
+			var widDomFn={"stemDiv":null,"optDiv":null,"respDiv":null}; 
 			this.passWebDom=function(domName,domObj){
-				var newDomObj;
 				if(domName in webDom){
-					if(domObj instanceof jQuery){
-						newDomObj=domObj;
-					}else{
-						newDomObj=$(domObj);
-					}
-					webDom[domName]=newDomObj;
-					if(domName in widDom){ // swap DOM content 
-						webDom[domName].html(widDom[domName]);
+					webDom[domName]=domObj;
+					if(domName in widDomFn && widDomFn[domName]!=null){ 
+						// clear webDom and pass to widDomFn
+						$(webDom[domName]).html("");
+						widDomFn[domName](webDom[domName]);
 					}
 				}else{
 					console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
 				}
 			}
-			this.passWidDom=function(domName,domObj){
+			this.passWidDomFn=function(domName,domFn){
 				if(domName in webDom){
-					widDom[domName]=domObj;
-					webDom[domName].html(widDom[domName]);
+					widDomFn[domName]=domFn;
+					if(widDomFn[domName]!=null && webDom[domName]!=null){
+						// clear webDom and pass to widDomFn
+						$(webDom[domName]).html("");
+						widDomFn[domName](webDom[domName]);
+					}
 				}else{
 					console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
 				}
 			}
-			this.getHeadDom=function(){
-				return webDom["headDom"];
-			}
+			// detect windows size change, and change respDiv child size.  
+			$(window).resize(function(){
+				// update respDiv dimensions
+				if(widDomFn["respDiv"]!=null && webDom["respDiv"]!=null){
+					widDomFn["respDiv"](webDom["respDiv"]);
+				}
+			})
+
 		})();
 		domManager.passWebDom("stemDiv",stemDiv);
 		domManager.passWebDom("optDiv",optDiv);
@@ -216,9 +265,11 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 				require(["ctype"],function(ctype){
 					var stemContent=new ctype(qnStem);
 					// TODO: take a long hard look at ctype
-					var stemDiv=document.createElement("div");
-					stemContent.putInto(stemDiv);
-					domManager.passWidDom("stemDiv",stemDiv);
+					// var stemDiv=document.createElement("div");
+					// stemContent.putInto(stemDiv);
+					// domManager.passWidDom("stemDiv",stemDiv);
+					
+					domManager.passWidDomFn("stemDiv",stemContent.putInto);
 				}) 
 				qnHandlerObj.execQn(widgetName,widgetParams,currResp);
 			} else {

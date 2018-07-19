@@ -161,9 +161,11 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 		var domManager=new (function(){
 			var webDom={"stemDiv":null,"optDiv":null,"respDiv":null};
 			var widDomFn={"stemDiv":null,"optDiv":null,"respDiv":null}; 
+			// ensure that if 
 			this.passWebDom=function(domName,domObj){
+			// domObj may be: 1) a jQuery object, or 2) a DOM object, or 3) a css selector string. 
 				if(domName in webDom){
-					webDom[domName]=domObj;
+					webDom[domName]=$(domObj).get(0); // stores as DOM object
 					if(domName in widDomFn && widDomFn[domName]!=null){ 
 						// clear webDom and pass to widDomFn
 						$(webDom[domName]).html("");
@@ -192,11 +194,14 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 					widDomFn["respDiv"](webDom["respDiv"]);
 				}
 			})
-
 		})();
 		domManager.passWebDom("stemDiv",stemDiv);
 		domManager.passWebDom("optDiv",optDiv);
 		domManager.passWebDom("respDiv",respDiv);
+
+		this.swapDom=function(domName,domObj){
+			domManager.passWebDom(domName,domObj);
+		}
 
 		var headManager=new (function(head){
 			var $head;
@@ -256,9 +261,6 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 				console.warn("setKernelParams "+ name +"="+value+" is ignored");	
 			}
 		}
-		this.swapDom=function(domName,domObj){
-			domManager.passWebDom(domName,domObj);
-		}
 		this.execQn=function(qnStem,widgetName,widgetParams,currResp){
 			if(socketReady){ // good to go if socket ready
 				// put qnStem
@@ -269,6 +271,7 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 					// stemContent.putInto(stemDiv);
 					// domManager.passWidDom("stemDiv",stemDiv);
 					
+					// need to use clicker-web to test this part
 					domManager.passWidDomFn("stemDiv",stemContent.putInto);
 				}) 
 				qnHandlerObj.execQn(widgetName,widgetParams,currResp);

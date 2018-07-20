@@ -87,6 +87,12 @@ define(["jquery"],function(){
 					domManager.passWidDomFn("respDiv",null);
 					console.warn(widName+".passRespDom() not specified");
 				}
+				if(typeof(widObj.updateRespDim)=="function"){
+					domManager.passUpdateRespDimFn(widObj.updateRespDim);
+				}else{
+					domManager.passUpdateRespDimFn(null);
+					console.warn(widName+".updateRespDim() not specified");
+				}
 
 				var studentList=interactManager.getConnectedStudents();
 				for (var studentUuid in studentList){

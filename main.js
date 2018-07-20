@@ -22,7 +22,7 @@ require.config({ urlArgs: "v=" +  (new Date()).getTime() });
 
 define(["socket-router","./sockethost","./studentmodel","./questionhandler"],
 function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
-	return function(stemDiv,optDiv,respDiv,headDom){ 
+	return function(stemDiv,optDiv,respDiv,respGhost,headDom){ 
 		var socketHostObj, studentModelObj, qnHandlerObj, kernelObj=this;
 		var connectCalled=false, socketReady=false, kivQn=null;
 
@@ -108,68 +108,44 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 				return studentModelObj.getStudents();
 			}
 		};
-		
-		// // Tidy this up when gadget and widlets implemented.  
-		// // takes the dom passed by web, and manages what the widget
-		// // is allowed to do to it. passed as a function into questionhanler.
-		// // the function will change with widlets and gadgets.
-		// var domManager=new (function(){
-		// 	// will change again when we have widlet and gadgets. 
-		// 	// headDom may be unnecessary here. 
-		// 	var $webDom={"stemDiv":$('div'),"optDiv":$('div'),"respDiv":$('div'),"headDom":$('head')}
-		// 	var $widDom={}; // should hold functions
-		// 	this.passWebDom=function(domName,domObj){
-		// 		var $newDomObj;
-		// 		if(domName in $webDom){
-		// 			if(domObj instanceof jQuery){
-		// 				$newDomObj=domObj;
-		// 			}else{
-		// 				$newDomObj=$(domObj);
-		// 			}
-		// 			$webDom[domName]=$newDomObj;
-		// 			if(domName in $widDom){ // swap DOM content 
-		// 				$webDom[domName].html($widDom[domName]);
-		// 			}
-		// 		}else{
-		// 			console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
-		// 		}
-		// 	}
-		// 	this.passWidDom=function(domName,domObj){
-		// 		var $newDomObj;
-		// 		if(domName in $webDom){
-		// 			if(domObj instanceof jQuery){
-		// 				$newDomObj=domObj;
-		// 			}else{
-		// 				$newDomObj=$(domObj);
-		// 			}
-		// 			$widDom[domName]=$newDomObj;
-		// 			$webDom[domName].html($widDom[domName]);
-		// 		}else{
-		// 			console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
-		// 		}
-		// 	}
-		// 	this.getHeadDom=function(){
-		// 		return webDom["headDom"];
-		// 	}
-		// 	// detect windows size change, and change respDiv child size.  
-		// 	$(window).resize(function(){
-		// 		// this is quite a hack - figure out a neater way to handle resize when revamping this. 
-		// 		qnHandlerObj.updateRespDim($webDom["respDiv"].height(),$webDom["respDiv"].width());
-		// 	})
-		// })();
 
-		var domManager=new (function(){
+		// Functioning. refactor after sufficient testing. 
+		var domManager=new (function(respGhost){
 			var webDom={"stemDiv":null,"optDiv":null,"respDiv":null};
 			var widDomFn={"stemDiv":null,"optDiv":null,"respDiv":null}; 
-			// ensure that if 
+			var updateRespDimFn=null;
+
+			var currHeight, currWidth;
+			function updateDim(){
+				if(updateRespDimFn!=null){
+					var ghostHeight=parseInt($(respGhost).height());
+					var ghostWidth=parseInt($(respGhost).width());
+					if(currHeight!=ghostHeight||currWidth!=ghostWidth){
+						currHeight=ghostHeight; currWidth=ghostWidth;
+						updateRespDimFn(currHeight,currWidth);
+					}
+				}
+			}
+			var resizeObserver = new ResizeObserver(function(mutations) {
+				updateDim();
+			});
+
 			this.passWebDom=function(domName,domObj){
 			// domObj may be: 1) a jQuery object, or 2) a DOM object, or 3) a css selector string. 
 				if(domName in webDom){
 					webDom[domName]=$(domObj).get(0); // stores as DOM object
-					if(domName in widDomFn && widDomFn[domName]!=null){ 
+					if(webDom[domName]!=null && widDomFn[domName]!=null){ 
 						// clear webDom and pass to widDomFn
 						$(webDom[domName]).html("");
 						widDomFn[domName](webDom[domName]);
+						currHeight=0; currWidth=0;
+
+						if(domName=="respDiv" && updateRespDimFn!=null){
+							updateDim();
+						}
+					}
+					if(domName=="stemDiv"||domName=="optDiv"){
+						resizeObserver.observe(webDom[domName]);
 					}
 				}else{
 					console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
@@ -182,19 +158,35 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 						// clear webDom and pass to widDomFn
 						$(webDom[domName]).html("");
 						widDomFn[domName](webDom[domName]);
+						currHeight=0; currWidth=0;
+						if(domName=="respDiv" && updateRespDimFn!=null){
+							updateDim();
+						}
 					}
 				}else{
 					console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
 				}
 			}
+			this.passUpdateRespDimFn=function(updateDimFn){
+				updateRespDimFn=updateDimFn;
+				var domName="respDiv";
+				if(widDomFn[domName]!=null && webDom[domName]!=null && updateRespDimFn!=null){
+					updateDim();
+				}
+			}
 			// detect windows size change, and change respDiv child size.  
 			$(window).resize(function(){
-				// update respDiv dimensions
-				if(widDomFn["respDiv"]!=null && webDom["respDiv"]!=null){
-					widDomFn["respDiv"](webDom["respDiv"]);
+				// update dimensions sampling from respGhost,
+				// which has display of flex and does not contain any other elements 
+				// that may also affect its dimensions. 
+				if(updateRespDimFn!=null){
+					updateDim();
 				}
 			})
-		})();
+			// does not work. 
+			// resizeObserver.observe(window);
+		})(respGhost);
+
 		domManager.passWebDom("stemDiv",stemDiv);
 		domManager.passWebDom("optDiv",optDiv);
 		domManager.passWebDom("respDiv",respDiv);

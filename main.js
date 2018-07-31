@@ -117,9 +117,12 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 
 			var currHeight, currWidth;
 			function updateDim(){
+				// console.log("updateDim")
 				if(updateRespDimFn!=null){
 					var ghostHeight=parseInt($(respGhost).height());
 					var ghostWidth=parseInt($(respGhost).width());
+					// console.log("currHeight: "+currHeight+", currWidth: "+currWidth);
+					// console.log("ghostHeight: "+ghostHeight+", ghostWidth: "+ghostWidth);
 					if(currHeight!=ghostHeight||currWidth!=ghostWidth){
 						currHeight=ghostHeight; currWidth=ghostWidth;
 						updateRespDimFn(currHeight,currWidth);
@@ -151,9 +154,15 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 					console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
 				}
 			}
+			// there is still something not quite right about this system - 
+			// possible for passWidDomFn to be called and the updateRespDimFn to be for 
+			// the previous mod. This needs a long hard look too.... may kiv for the moment
+			// due to time constraints. 
 			this.passWidDomFn=function(domName,domFn){
+				// console.log("passWidDomFn")
 				if(domName in webDom){
 					widDomFn[domName]=domFn;
+					// console.log("widDomFn: "+widDomFn[domName]+" webDom: "+webDom[domName])
 					if(widDomFn[domName]!=null && webDom[domName]!=null){
 						// clear webDom and pass to widDomFn
 						$(webDom[domName]).html("");
@@ -168,6 +177,7 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 				}
 			}
 			this.passUpdateRespDimFn=function(updateDimFn){
+				// console.log("passUpdateRespDimFn")
 				updateRespDimFn=updateDimFn;
 				var domName="respDiv";
 				if(widDomFn[domName]!=null && webDom[domName]!=null && updateRespDimFn!=null){

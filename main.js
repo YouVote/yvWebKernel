@@ -128,12 +128,7 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 					ghostHeight=parseInt($(ghostObj).height());
 					ghostWidth=parseInt($(ghostObj).width());
 					updateDimFn(ghostHeight,ghostWidth);
-					// var resizeObserver = new ResizeObserver(function(mutations) {
-					// 	ghostHeight=parseInt($(ghostObj).height());
-					// 	ghostWidth=parseInt($(ghostWidth).height());
-					// 	updateDimFn(ghostHeight,ghostWidth);
-					// });
-					// resizeObserver.observe(ghostObj);
+
 					(new ResizeObserver(function(mutations) {
 						ghostHeight=parseInt($(ghostObj).height());
 						ghostWidth=parseInt($(ghostObj).width());
@@ -177,108 +172,10 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 			}
 		})
 
-		// // Functioning. refactor after sufficient testing. 
-		// var domManager=new (function(respGhost){
-		// 	var webDom={"stemDiv":null,"optDiv":null,"respDiv":null};
-		// 	var widDomFn={"stemDiv":null,"optDiv":null,"respDiv":null}; 
-		// 	var updateRespDimFn=null;
-
-		// 	var currHeight, currWidth;
-		// 	function updateDim(){
-		// 		// console.log("updateDim")
-		// 		if(updateRespDimFn!=null){
-		// 			var ghostHeight=parseInt($(respGhost).height());
-		// 			var ghostWidth=parseInt($(respGhost).width());
-		// 			// console.log("currHeight: "+currHeight+", currWidth: "+currWidth);
-		// 			// console.log("ghostHeight: "+ghostHeight+", ghostWidth: "+ghostWidth);
-		// 			if(currHeight!=ghostHeight||currWidth!=ghostWidth){
-		// 				currHeight=ghostHeight; currWidth=ghostWidth;
-		// 				updateRespDimFn(currHeight,currWidth);
-		// 			}
-		// 		}
-		// 	}
-		// 	var resizeObserver = new ResizeObserver(function(mutations) {
-		// 		updateDim();
-		// 	});
-
-		// 	this.passWebDom=function(domName,domObj){
-		// 	// domObj may be: 1) a jQuery object, or 2) a DOM object, or 3) a css selector string. 
-		// 		if(domName in webDom){
-		// 			webDom[domName]=$(domObj).get(0); // stores as DOM object
-		// 			if(webDom[domName]!=null && widDomFn[domName]!=null){ 
-		// 				// clear webDom and pass to widDomFn
-		// 				$(webDom[domName]).html("");
-		// 				widDomFn[domName](webDom[domName]);
-		// 				currHeight=0; currWidth=0;
-
-		// 				if(domName=="respDiv" && updateRespDimFn!=null){
-		// 					updateDim();
-		// 				}
-		// 			}
-		// 			if(domName=="stemDiv"||domName=="optDiv"){
-		// 				resizeObserver.observe(webDom[domName]);
-		// 			}
-		// 		}else{
-		// 			console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
-		// 		}
-		// 	}
-		// 	// there is still something not quite right about this system - 
-		// 	// possible for passWidDomFn to be called and the updateRespDimFn to be for 
-		// 	// the previous mod. This needs a long hard look too.... may kiv for the moment
-		// 	// due to time constraints. 
-		// 	this.passWidDomFn=function(domName,domFn){
-		// 		// console.log("passWidDomFn")
-		// 		if(domName in webDom){
-		// 			widDomFn[domName]=domFn;
-		// 			// console.log("widDomFn: "+widDomFn[domName]+" webDom: "+webDom[domName])
-		// 			if(widDomFn[domName]!=null && webDom[domName]!=null){
-		// 				// clear webDom and pass to widDomFn
-		// 				$(webDom[domName]).html("");
-		// 				widDomFn[domName](webDom[domName]);
-		// 				currHeight=0; currWidth=0;
-		// 				if(domName=="respDiv" && updateRespDimFn!=null){
-		// 					updateDim();
-		// 				}
-		// 			}
-		// 		}else{
-		// 			console.warn("WARNING: requested DOM "+domName+" is not a valid webDom.");
-		// 		}
-		// 	}
-		// 	this.passUpdateRespDimFn=function(updateDimFn){
-		// 		// console.log("passUpdateRespDimFn")
-		// 		updateRespDimFn=updateDimFn;
-		// 		var domName="respDiv";
-		// 		if(widDomFn[domName]!=null && webDom[domName]!=null && updateRespDimFn!=null){
-		// 			updateDim();
-		// 		}
-		// 	}
-		// 	// detect windows size change, and change respDiv child size.  
-		// 	$(window).resize(function(){
-		// 		// update dimensions sampling from respGhost,
-		// 		// which has display of flex and does not contain any other elements 
-		// 		// that may also affect its dimensions. 
-		// 		if(updateRespDimFn!=null){
-		// 			updateDim();
-		// 		}
-		// 	})
-		// 	// does not work. 
-		// 	// resizeObserver.observe(window);
-		// })(respGhost);
-
-		// domManager.passWebDom("stemDiv",stemDiv);
-		// domManager.passWebDom("optDiv",optDiv);
-		// domManager.passWebDom("respDiv",respDiv);
 
 		domMan.passWebDom("stemDiv",stemDiv,null);
 		domMan.passWebDom("optDiv",optDiv,null);
 		domMan.passWebDom("respDiv",respDiv,respGhost);
-
-		// // figure out who calls this - may be problematic if respdom calls it. 
-		// this.swapDom=function(domName,domObj){
-		// 	// domManager.passWebDom(domName,domObj);
-		// 	console.log("swap "+domName)
-		// 	domMan.passWebDom(domName,domObj,null);
-		// }
 
 		var headManager=new (function(head){
 			var $head;
@@ -350,7 +247,6 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 					// domManager.passWidDom("stemDiv",stemDiv);
 					
 					// need to use clicker-web to test this part
-					// domManager.passWidDomFn("stemDiv",stemContent.putInto);
 					domMan.passWidDom("stemDiv",stemContent.putInto,null);
 				}) 
 				qnHandlerObj.execQn(widgetName,widgetParams,currResp);

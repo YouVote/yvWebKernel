@@ -73,29 +73,19 @@ define(["jquery"],function(){
 				// this will change with widget and gadgets. 
 				// kiv pattern for now. 
 				if(typeof(widObj.passInputDom)=="function"){
-					// domManager.passWidDom("optDiv",widObj.responseInput());
-					// domManager.passWidDomFn("optDiv",widObj.passInputDom);
 					domManager.passWidDom("optDiv",widObj.passInputDom,null);
-					
 				}else{
-					// domManager.passWidDomFn("optDiv",null);
 					domManager.passWidDom("optDiv",null,null);
 					console.warn(widName+".passInputDom() not specified");
 				}
 				if(typeof(widObj.passRespDom)=="function"){
-					// should insert respDom height and width info here - but how? 
-					// domManager.passWidDom("respDiv",widObj.responseDom());
-					// domManager.passWidDomFn("respDiv",widObj.passRespDom);
 					if(typeof(widObj.updateRespDim)=="function"){
-						// domManager.passUpdateRespDimFn(widObj.updateRespDim);
 						domManager.passWidDom("respDiv",widObj.passRespDom,widObj.updateRespDim);
 					}else{
-						// domManager.passUpdateRespDimFn(null);
 						domManager.passWidDom("respDiv",widObj.passRespDom,null);
 						console.warn(widName+".updateRespDim() not specified");
 					}
 				}else{
-					// domManager.passWidDomFn("respDiv",null);
 					domManager.passWidDom("respDiv",null,null);
 					console.warn(widName+".passRespDom() not specified");
 				}

@@ -111,46 +111,45 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 
 		// webDom is passed in, and passed up to widget, when function is received. 
 		// for resp, the dimension is also passed and called whenever there is a change in dimension.
-
-		// domManager now does more than just swapping dom when passed. 
-		// it also calls resize when page changes size.
-		var domElemMatcher=function(domElemName){
-			var domObj=null, ghostObj=null;
-			var passDomFn=null, updateDimFn=null;
-			var ghostHeight=0, ghostWidth=0;
-			function match(){
-				if(domObj!=null && passDomFn!=null){
-					$(domObj).html("");
-					passDomFn(domObj);
-				}
-				if(ghostObj!=null && updateDimFn!=null){
-					//resizeObserver
-					ghostHeight=parseInt($(ghostObj).height());
-					ghostWidth=parseInt($(ghostObj).width());
-					updateDimFn(ghostHeight,ghostWidth);
-
-					(new ResizeObserver(function(mutations) {
+		var domManager=new (function(){
+			// domManager now does more than just swapping dom when passed. 
+			// it also calls resize when page changes size.
+			var domElemMatcher=function(domElemName){
+				var domObj=null, ghostObj=null;
+				var passDomFn=null, updateDimFn=null;
+				var ghostHeight=0, ghostWidth=0;
+				function match(){
+					if(domObj!=null && passDomFn!=null){
+						$(domObj).html("");
+						passDomFn(domObj);
+					}
+					if(ghostObj!=null && updateDimFn!=null){
+						//resizeObserver
 						ghostHeight=parseInt($(ghostObj).height());
 						ghostWidth=parseInt($(ghostObj).width());
 						updateDimFn(ghostHeight,ghostWidth);
-					})).observe(ghostObj);					
-				}else{
-					// remove resizeObserver					
+
+						(new ResizeObserver(function(mutations) {
+							ghostHeight=parseInt($(ghostObj).height());
+							ghostWidth=parseInt($(ghostObj).width());
+							updateDimFn(ghostHeight,ghostWidth);
+						})).observe(ghostObj);					
+					}else{
+						// remove resizeObserver					
+					}
+				}
+				this.webDom=function(dom,ghost){
+				// domObj may be: 1) a jQuery object, or 2) a DOM object, or 3) a css selector string. 
+					domObj=$(dom).get(0); // stores as DOM object
+					ghostObj=$(ghost).get(0);
+					match();
+				}
+				this.widDom=function(passDom,updateDim){
+					passDomFn=passDom;updateDimFn=updateDim;
+					match();
 				}
 			}
-			this.webDom=function(dom,ghost){
-			// domObj may be: 1) a jQuery object, or 2) a DOM object, or 3) a css selector string. 
-				domObj=$(dom).get(0); // stores as DOM object
-				ghostObj=$(ghost).get(0);
-				match();
-			}
-			this.widDom=function(passDom,updateDim){
-				passDomFn=passDom;updateDimFn=updateDim;
-				match();
-			}
-		}
 
-		var domManager=new (function(){
 			var elems={
 				"stemDiv":new domElemMatcher("stemDiv"),
 				"optDiv":new domElemMatcher("optDiv"),
@@ -205,7 +204,6 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 			if(!connectCalled){
 				headManager.clear();
 				studentModelObj=new studentModelEngine(interactManager);
-				// qnHandlerObj=new qnHandlerEngine(domManager,headManager,kernelParams,interactManager);
 				qnHandlerObj=new qnHandlerEngine(domManager,headManager,kernelParams,interactManager);
 				require.config({paths:{"socketio-server":kernelParams.socketScriptURL}});
 				socketHostObj=new socketHostEngine(

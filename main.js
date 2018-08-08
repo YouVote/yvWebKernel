@@ -150,7 +150,7 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 			}
 		}
 
-		var domMan=new (function(){
+		var domManager=new (function(){
 			var elems={
 				"stemDiv":new domElemMatcher("stemDiv"),
 				"optDiv":new domElemMatcher("optDiv"),
@@ -172,10 +172,9 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 			}
 		})
 
-
-		domMan.passWebDom("stemDiv",stemDiv,null);
-		domMan.passWebDom("optDiv",optDiv,null);
-		domMan.passWebDom("respDiv",respDiv,respGhost);
+		domManager.passWebDom("stemDiv",stemDiv,null);
+		domManager.passWebDom("optDiv",optDiv,null);
+		domManager.passWebDom("respDiv",respDiv,respGhost);
 
 		var headManager=new (function(head){
 			var $head;
@@ -207,7 +206,7 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 				headManager.clear();
 				studentModelObj=new studentModelEngine(interactManager);
 				// qnHandlerObj=new qnHandlerEngine(domManager,headManager,kernelParams,interactManager);
-				qnHandlerObj=new qnHandlerEngine(domMan,headManager,kernelParams,interactManager);
+				qnHandlerObj=new qnHandlerEngine(domManager,headManager,kernelParams,interactManager);
 				require.config({paths:{"socketio-server":kernelParams.socketScriptURL}});
 				socketHostObj=new socketHostEngine(
 					kernelParams,
@@ -247,7 +246,7 @@ function(router,socketHostEngine,studentModelEngine,qnHandlerEngine){
 					// domManager.passWidDom("stemDiv",stemDiv);
 					
 					// need to use clicker-web to test this part
-					domMan.passWidDom("stemDiv",stemContent.putInto,null);
+					domManager.passWidDom("stemDiv",stemContent.putInto,null);
 				}) 
 				qnHandlerObj.execQn(widgetName,widgetParams,currResp);
 			} else {
